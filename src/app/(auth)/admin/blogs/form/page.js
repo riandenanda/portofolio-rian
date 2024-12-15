@@ -85,7 +85,7 @@ export default function AdminBlogsForm() {
         </div>
 
         <div className="w-full my-2">
-          <label>Sub Title</label>
+          <label>Sub Title *</label>
           <input
             name="subTitle"
             value={data.subTitle}
