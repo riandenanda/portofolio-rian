@@ -1,51 +1,54 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "../../../lib/mongodb";
-import { ObjectId } from "mongodb";
+import { ObjectId } from "mongodb"; // Import ObjectId from mongodb
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { replycommentId: string } }
+export interface ReplyComment {
+  reply: string;
+  date: Date;
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
+  const { replycommentId } = req.query;
+
+  // Validate `commentId`
+  if (typeof replycommentId !== "string" || !ObjectId.isValid(replycommentId)) {
+    return res
+      .status(400)
+      .json({ error: "Invalid or missing replycommentId parameter" });
+  }
+
   try {
-    const { reply } = await req.json(); // Extract 'reply' from the request body
-
-    if (!reply || reply.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Reply cannot be empty" },
-        { status: 400 }
-      );
-    }
-
-    // Connect to the MongoDB database
     const client = await clientPromise;
-    const db = client.db();
+    const db = client.db(process.env.MONGODB_NAME);
 
-    const commentId = params.replycommentId; // Get the commentId from the URL params
+    switch (req.method) {
+      case "GET":
+        try {
+          const replies = await db
+            .collection("reply-comments_gebby") // Specify the collection without typing here
+            .find({ commentId: replycommentId }) // Use ObjectId for the query
+            .sort({ createdAt: -1 })
+            .toArray();
 
-    // Update the comment by adding the reply to the 'replies' field
-    const result = await db.collection("comments").updateOne(
-      { _id: new ObjectId(commentId) },
-      {
-        $push: { replies: { reply, date: new Date() } }, // Push the reply with a timestamp
-      }
-    );
+          console.log(replies);
 
-    if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { success: false, message: "Failed to add reply" },
-        { status: 500 }
-      );
+          // Return the replies
+          res.status(200).json({ data: replies as ReplyComment[] });
+        } catch (error) {
+          console.error("Error fetching replies:", error);
+          res.status(500).json({ error: "Failed to fetch replies" });
+        }
+        break;
+
+      default:
+        res.setHeader("Allow", ["GET"]);
+        res.status(405).end(`Method ${req.method} Not Allowed`);
     }
-
-    return NextResponse.json(
-      { success: true, message: "Reply added successfully" },
-      { status: 200 }
-    );
   } catch (error) {
-    console.error("Error while replying to comment:", error);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    console.error("Database connection error:", error);
+    res.status(500).json({ error: "Failed to connect to the database" });
   }
 }

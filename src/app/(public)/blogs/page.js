@@ -8,6 +8,7 @@ export default function AdminBlogs() {
   const router = useRouter();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchBlogs();
@@ -36,16 +37,34 @@ export default function AdminBlogs() {
     router.push(`/blogs/${id}`);
   };
 
+  const filteredData = data.filter(
+    (item) =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.subTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.kategori.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="mt-28 p-4">
       <h2 className="text-2xl font-bold mb-6 text-center pt-10 text-black">
         Blogs
       </h2>
+
+      <div className="mb-6 text-center">
+        <input
+          type="text"
+          placeholder="Search blogs..."
+          className="border rounded-lg px-4 py-2 w-full md:w-1/3"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {loading ? (
           <p>Loading...</p>
-        ) : (
-          data.map((item) => (
+        ) : filteredData.length > 0 ? (
+          filteredData.map((item) => (
             <div
               key={item._id}
               className="p-4 bg-white border rounded-lg shadow-md"
@@ -77,6 +96,8 @@ export default function AdminBlogs() {
               </div>
             </div>
           ))
+        ) : (
+          <p>No Blogs Found</p>
         )}
       </div>
     </div>

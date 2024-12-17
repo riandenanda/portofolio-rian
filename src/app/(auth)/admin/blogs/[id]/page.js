@@ -4,6 +4,7 @@ import Card from "../../../../../components/card";
 import { useEffect, useState, useRef } from "react";
 import ConfigDialog from "../../../../../components/ConfirmDialog";
 import { Editor } from "@tinymce/tinymce-react";
+import { Toaster, toast } from "sonner";
 
 export default function EditBlogs() {
   const router = useRouter();
@@ -17,7 +18,6 @@ export default function EditBlogs() {
     title: "",
     subTitle: "",
     content: "",
-    _id: "",
     kategori: "",
   });
   const kategori = [
@@ -66,32 +66,33 @@ export default function EditBlogs() {
 
   const onSubmitData = async () => {
     try {
-      if (editorRef.current) {
-        const body = { ...data };
-        body.content = editorRef.current.getContent();
+      // if (editorRef.current) {
+      const body = { ...data };
+      // body.content = editorRef.current.getContent();
 
-        let res = await fetch(`/api/blogs/${data._id}`, {
-          method: "PUT",
-          // headers: {
-          //     'Content-Type': 'application/json'
-          // },
-          body: JSON.stringify(body),
-        });
+      let res = await fetch(`/api/blogs/${params.id}`, {
+        method: "PUT",
+        // headers: {
+        //     'Content-Type': 'application/json'
+        // },
+        body: JSON.stringify(body),
+      });
 
-        let resData = await res.json();
-        if (!res.ok) {
-          throw new Error(resData.message);
-        }
+      let resData = await res.json();
+      // if (!res.ok) {
+      //   throw new Error(resData.message);
+      // }
 
-        setModal(true);
-        setModalTitle("Info");
-        setModalMessage(resData.message);
-      }
+      // setModal(true);
+      // setModalTitle("Info");
+      // setModalMessage(resData.message);
+      // }
+
+      router.push("/admin/blogs");
+      toast.success("Blog updated successfully");
     } catch (err) {
       console.error("ERR", err.message);
-      setModal(true);
-      setModalTitle("Error");
-      setModalMessage(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -103,6 +104,7 @@ export default function EditBlogs() {
   return (
     <>
       <Card title="Blogs Edit Form">
+        <Toaster />
         <div className="w-full my-2">
           <label>Title</label>
           <input
@@ -125,7 +127,7 @@ export default function EditBlogs() {
         </div>
 
         <div className="w-full my-2">
-          <label>kategori</label>
+          <label>Kategori</label>
           <select
             name="kategori"
             value={data.kategori} // Tambahkan value untuk menampilkan data yang dipilih
@@ -140,7 +142,18 @@ export default function EditBlogs() {
           </select>
         </div>
 
-        <Editor
+        <div className="w-full my-2">
+          <label>Content</label>
+          <textarea
+            name="content"
+            className="border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 w-full"
+            value={data.content}
+            onChange={inputHandler}
+            placeholder="Enter blog content"
+          />
+        </div>
+
+        {/* <Editor
           id="content"
           apiKey="zsi50x7ymctngli7btlhb6o85wqsdshppgng8g4pt1q8kn25"
           onInit={(_evt, editor) => (editorRef.current = editor)}
@@ -176,7 +189,7 @@ export default function EditBlogs() {
             content_style:
               "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
           }}
-        />
+        /> */}
 
         <button className="btn-primary" onClick={onSubmitData}>
           <span className="relative text-sm font-semibold text-white">

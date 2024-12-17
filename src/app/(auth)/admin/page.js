@@ -1,8 +1,3 @@
 export default function Dashboard() {
-    return (
-      <>
-        asdf
-      </>
-    );
+  return <>This is Dashboard Page</>;
 }
-  
